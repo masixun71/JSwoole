@@ -15,7 +15,7 @@ class TestService extends AbstractHandleService
         while (true)
         {
             $userId = rand(0,100);
-            $client->fire(new TestEvent($userId, $userId));
+            client()->fire(new TestEvent($userId, $userId));
         }
 
 

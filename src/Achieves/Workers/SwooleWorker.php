@@ -5,6 +5,7 @@ namespace Jue\Swoole\Achieves\Workers;
 
 use Jue\Swoole\Achieves\Loggers\Logger;
 use Jue\Swoole\Achieves\Masters\SwooleMaster;
+use Jue\Swoole\Domain\Di\Di;
 
 class SwooleWorker
 {
@@ -31,9 +32,9 @@ class SwooleWorker
         try
         {
             //重置子进程logger位置
-            (new Logger())->set(sprintf(SwooleMaster::getTopic()."-swoole-worker#%d", $id));
+            Di::set('logger', Logger::getInstance('/tmp', sprintf(SwooleMaster::getTopic()."-swoole-worker#%d", $id)));
 
-            app(SwooleMaster::getWorkerMap()[$worker->consumer]['class'])->handle();
+            (new (SwooleMaster::getWorkerMap()[$worker->consumer]['class']))->handle();
 
         }catch (\Exception $e)
         {

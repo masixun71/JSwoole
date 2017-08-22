@@ -2,7 +2,9 @@
 
 namespace Jue\Swoole;
 
+use Jue\Swoole\Achieves\Loggers\Logger;
 use Jue\Swoole\Domain\Clients\IClient;
+use Jue\Swoole\Domain\Di\Di;
 use Jue\Swoole\Domain\Events\TestEvent;
 use Jue\Swoole\Domain\Listeners\TestListener;
 use Jue\Swoole\Domain\Maps\WorkerMap;
@@ -15,11 +17,21 @@ class SwooleServiceProvider
 
     public function register()
     {
-        $this->app->bind(IClient::class, Client::class);
+        $this->registerClient();
+        $this->registerLogger();
         $this->registerSwoole();
     }
 
+    public function registerClient()
+    {
+        Di::set('client', new Client());
+    }
 
+
+    public function registerLogger()
+    {
+        Di::set('logger', Logger::getInstance('/tmp'));
+    }
 
     public function registerSwoole()
     {

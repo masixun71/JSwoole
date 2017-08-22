@@ -3,6 +3,7 @@
 namespace Jue\Swoole\Achieves\Taskers;
 
 
+use Jue\Swoole\Domain\Di\Di;
 use Jue\Swoole\Domain\Events\AbstractEvent;
 use Jue\Swoole\Domain\Messages\Processor;
 use Jue\Swoole\Domain\Types\WorkerType;
@@ -97,9 +98,8 @@ class SwooleTasker
 
     private static function reset($taskerName)
     {
-        //重置子进程日志位置 todo
-        (new Logger())->set(SwooleMaster::getTopic() . '-' . $taskerName);
-
+        //重置子进程日志位置
+        Di::set('logger', Logger::getInstance('/tmp', sprintf(SwooleMaster::getTopic() . '-' . $taskerName)));
         //重置数据库链接 todo
     }
 
