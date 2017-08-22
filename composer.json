@@ -8,7 +8,9 @@
             "email": "masixun71@foxmail.com"
         }
     ],
-    "require": {},
+    "require": {
+        "symfony/console": "@stable"
+    },
     "repositories": [
         {
             "type": "composer",

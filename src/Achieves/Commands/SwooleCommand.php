@@ -6,36 +6,58 @@ namespace Jue\Swoole\Achieves\Commands;
 use Jue\Swoole\Domain\Maps\WorkerMap;
 use Jue\Swoole\Achieves\Managers\SwooleManager;
 use Jue\Swoole\Achieves\Masters\SwooleMaster;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Exception\LogicException;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
 
-class SwooleCommand
+class SwooleCommand extends Command
 {
     /**
      * @var string
      */
-    protected $signature = 'swoole 
-                            { do? : 执行命令 }
-                            { consumer? : 启动的consumer }
-                            { tasker_num? : 启动的tasker数量 }
-                            { msg_start? : 启用消息队列key的起始值 }
-                            { msg_end? : 启用消息队列key的结束值 }
+    protected $value = 'swoole 
+                            { do? : 执行命令 [command]}
+                            { consumer? : 启动的consumer [start consumer name]}
+                            { tasker_num? : 启动的tasker数量 [start tasker amount]}
+                            { msg_start? : 启用消息队列key的起始值 [linux msgKey start]}
+                            { msg_end? : 启用消息队列key的结束值 [linux msgKey end] }
                             ';
     //消息队列使用的是[start, end-1],务必范围总数和启动的tasker数量保持一致,
     //若系统中消息队列已经存在，会报错，请使用还未创建的消息队列的key
 
-    protected $description = 'swoole管理命令';
+    /** @var InputInterface $input */
+    private $input;
+    /** @var OutputInterface $output */
+    private $output;
 
-    /**
-     * 处理函数.
-     *
-     * @return mixed
-     */
-    public function handle()
+
+    protected function configure()
     {
-        $do = $this->argument('do');
-        $consumer = $this->argument('consumer');
-        $taskerNum = $this->argument('tasker_num');
-        $msgStart = $this->argument('msg_start');
-        $msgEnd = $this->argument('msg_end');
+        $this->setName('swoole')
+            ->setDescription('swoole-management-tools')
+            ->setHelp('This command allows you to create swoole-manager');
+
+        $this->addArgument('do', InputArgument::OPTIONAL)
+            ->addArgument('consumer', InputArgument::OPTIONAL)
+            ->addArgument('tasker_num', InputArgument::OPTIONAL)
+            ->addArgument('msg_start', InputArgument::OPTIONAL)
+            ->addArgument('msg_end', InputArgument::OPTIONAL);
+
+    }
+
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
+        $this->input = $input;
+        $this->output = $output;
+
+        $do = $this->input->getArgument('do');
+        $consumer = $this->input->getArgument('consumer');
+        $taskerNum = $this->input->getArgument('tasker_num');
+        $msgStart = $this->input->getArgument('msg_start');
+        $msgEnd = $this->input->getArgument('msg_end');
 
         switch ($do)
         {
@@ -58,7 +80,7 @@ class SwooleCommand
     {
         if (empty($consumer) || empty($taskerNum) || empty($msgStart) || empty($msgEnd))
         {
-            throw new LogicException('缺少参数，请检查swoole，start参数');
+            throw new LogicException('缺少参数，请检查swoole，start参数[Missing parameters, please check swoole, start parameter]');
         }
 
 
@@ -71,7 +93,7 @@ class SwooleCommand
         }
         else
         {
-            throw new LogicException('不存在该consumer');
+            throw new LogicException('不存在该consumer[The consumer does not exist]');
         }
     }
 
@@ -80,12 +102,12 @@ class SwooleCommand
     {
         if ($msgStart <= 0)
         {
-            throw new LogicException('msgStart 必须大于0');
+            throw new LogicException('msgStart 必须大于0[msgStart must more than 0]');
         }
 
         if (($msgEnd - $msgStart) != $taskerNum)
         {
-            throw new LogicException('消息队列使用的是[start, end-1],务必范围总数和启动的tasker数量保持一致');
+            throw new LogicException('消息队列使用的是[start, end-1],务必范围总数和启动的tasker数量保持一致[msgKey in [start, end-1], you need set (taskerNum == msgEnd - msgStart)]');
         }
 
 //        for ($i = $msgStart; $i < $msgEnd; $i++)
@@ -105,30 +127,69 @@ class SwooleCommand
 
     private function showTable()
     {
-        $this->getOutput()->writeln("以下列表为可用的命令简写对应的处理");
-        $this->getOutput()->writeln("使用例子(php swoole start class-course-schedule-for-order 2 1 3)");
-        $this->getOutput()->writeln("调用的命令\t\t处理类\t\t描述");
+        $io = new SymfonyStyle($this->input, $this->output);
+        $io->title('table展示可执行的consumer程序<info>[table display can consumer process]</info>');
+        $io->section('使用例子<info>[example]</info>(php console swoole start class-course-schedule-for-order 2 1 3)');
+
+        $map = [];
         foreach (WorkerMap::MAP as $key => $item)
         {
-            $this->getOutput()->writeln("{$key}\t{$item['class']}\t{$item['des']}");
+            $map[] = [$key, $item['class'], $item['des']];
         }
+        $io->table(
+            array('调用的命令[command]', '执行类[class]', '描述[desc]'),
+            $map
+        );
+        $io->newLine(1);
     }
 
     private function showHelp()
     {
-        $this->getOutput()->writeln("若您想启用swoole多进程业务处理程序，请关注以下内容");
-        $this->getOutput()->writeln("目前提供3个命令使用,start show help");
-        $this->getOutput()->writeln("请将你的业务worker程序放入到WokerMap中");
-        $this->getOutput()->writeln("注意（业务worker务必继承AbstractHandleService）");
-        $this->getOutput()->writeln("使用show命令查看如何使用");
-        $this->getOutput()->writeln("start 命令后面需要四个参数: start consumer tasker_num msg_start msg_end");
-        $this->getOutput()->writeln("start consumer: 你在WorkerMap中定义的consumerKey");
-        $this->getOutput()->writeln("start tasker_num: tasker进程数量");
-        $this->getOutput()->writeln("start msg_start: 启用消息队列key的起始值");
-        $this->getOutput()->writeln("start msg_start: 启用消息队列key的结束值");
-        $this->getOutput()->writeln("消息队列使用的是[start, end-1],务必范围总数和启动的tasker数量保持一致");
-        $this->getOutput()->writeln("若系统中消息队列已经存在，会报错，请使用还未创建的消息队列的key");
-        $this->getOutput()->writeln("建议配合supervisord 使用");
+        $io = new SymfonyStyle($this->input, $this->output);
+
+        $io->title("<info>JSwoole基本使用帮助[JSwoole help]</info>");
+        $io->section("推荐配合supervisord 使用");
+        $io->section("目前提供3个命令使用,start, show, help");
+        $io->section('help');
+        $io->listing(array(
+            '查看基本使用帮助<info>[basic help]</info>',
+        ));
+        $io->section('show');
+        $io->listing(array(
+            'table展示可执行的consumer程序[table display can consumer process]',
+        ));
+        $io->section('start');
+        $io->writeln("start 命令后面需要四个参数<info>[The start command requires four arguments]</info>: start <comment>consumer</comment> <comment>tasker_num</comment> <comment>msg_start</comment> <comment>msg_end</comment>");
+        $io->listing(array(
+            '<comment>consumer</comment>: 你在WorkerMap中定义的consumerKey<info>[start consumer name]</info>',
+            '<comment>tasker_num</comment>: tasker进程数量<info>[start tasker amount]</info>',
+            '<comment>msg_start</comment>: 启用消息队列key的起始值<info>[linux msgKey start]</info>',
+            '<comment>msg_end</comment>: 启用消息队列key的结束值<info>[linux msgKey end]</info>'
+        ));
+        $io->warning('消息队列使用的是[start, end-1],务必范围总数和启动的tasker数量保持一致<info>[msgKey in [start, end-1], you need set (taskerNum == msgEnd - msgStart)]</info>');
+
+        $io->newLine(2);
+        $io->section('怎么添加业务程序?<info>[How to add my process?]</info>');
+        $io->text('查看SwooleServiceProvider<info>[ Look at SwooleServiceProvider]</info>');
+        $io->text('分为[has]<comment>registerEvents</comment>, <comment>registerWorkerMap</comment>');
+        $io->table(
+            array('registerWorkerMap'),
+            array(
+                array('注册获取消息的consumer程序<info>[Register the consumer program to get the message]</info>'),
+            )
+        );
+        $io->table(
+            array('registerEvents'),
+            array(
+                array('注册发送消息的event和对应的处理listener<info>[Register the event of the message and the corresponding handle listener]</info>'),
+            )
+        );
+        $io->listing(array(
+            '<fg=white>请将你的业务消息consumer程序注册到WokerMap中<info>Please register your business message consumer program into WokerMap</info></>',
+            '<fg=white>再创建一个worker与tasker沟通的event和处理listener<info>And then create a worker and tasker communication event and handle listener</info></>',
+            "<fg=white>完成<info>done></info></fg>"
+        ));
+        $io->success('🙏感谢收看[thank you]');
     }
 
 }
