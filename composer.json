@@ -10,7 +10,8 @@
     ],
     "require": {
         "symfony/console": "@stable",
-        "monolog/monolog": "^1.23"
+        "monolog/monolog": "^1.23",
+        "illuminate/container": "^5.4"
     },
     "repositories": [
         {

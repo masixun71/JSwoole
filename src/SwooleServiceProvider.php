@@ -4,9 +4,9 @@ namespace Jue\Swoole;
 
 use Jue\Swoole\Achieves\Loggers\Logger;
 use Jue\Swoole\Domain\Clients\IClient;
-use Jue\Swoole\Domain\Di\Di;
 use Jue\Swoole\Domain\Events\TestEvent;
 use Jue\Swoole\Domain\Listeners\TestListener;
+use Jue\Swoole\Domain\Loggers\ILogger;
 use Jue\Swoole\Domain\Maps\WorkerMap;
 use Jue\Swoole\Achieves\Clients\Client;
 use Jue\Swoole\Achieves\Masters\SwooleMaster;
@@ -24,13 +24,13 @@ class SwooleServiceProvider
 
     public function registerClient()
     {
-        Di::set('client', new Client());
+        container()->singleton(IClient::class, Client::class);
     }
 
 
     public function registerLogger()
     {
-        Di::set('logger', Logger::getInstance('/tmp'));
+        container()->instance(ILogger::class, Logger::getInstance('/tmp'));
     }
 
     public function registerSwoole()

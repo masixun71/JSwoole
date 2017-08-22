@@ -34,7 +34,7 @@ class SwooleWorker
             //重置子进程logger位置
             Di::set('logger', Logger::getInstance('/tmp', sprintf(SwooleMaster::getTopic()."-swoole-worker#%d", $id)));
 
-            (new (SwooleMaster::getWorkerMap()[$worker->consumer]['class']))->handle();
+            container()->make(SwooleMaster::getWorkerMap()[$worker->consumer]['class'])->handle();
 
         }catch (\Exception $e)
         {

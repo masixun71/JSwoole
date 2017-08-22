@@ -71,12 +71,12 @@ class MessageDataVO
      */
     public function buildEvent()
     {
-        return app($this->getEventName(), $this->getParameter());
+        return container()->makeWith($this->getEventName(), $this->getParameter());
     }
 
     public function buildListener()
     {
-        return app($this->getListenerName());
+        return container()->make($this->getListenerName());
     }
 
 

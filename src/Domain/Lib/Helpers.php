@@ -1,7 +1,6 @@
 <?php
 
-use Jue\Swoole\Domain\Clients\IClient;
-use Jue\Swoole\Domain\Di\Di;
+use Illuminate\Contracts\Container\Container;
 use Jue\Swoole\Domain\Loggers\ILogger;
 
 if (!function_exists('logger')) {
@@ -13,39 +12,29 @@ if (!function_exists('logger')) {
      *
      * @return ILogger
      */
-    function logger($make = null)
+    function logger()
     {
-        if (is_null($make)) {
-            $make = 'logger';
-        }
+        $make = ILogger::class;
 
-        if ($logger = Di::get($make)) {
+        if ($logger = container()->make($make)) {
             return $logger;
         } else {
-            throw new \Symfony\Component\Console\Exception\LogicException('di not exist logger');
+            throw new \Symfony\Component\Console\Exception\LogicException('container not exist logger');
         }
     }
 }
 
-if (!function_exists('client')) {
+if (!function_exists('container')) {
 
     /**
      * 读取logger实例.
      *
      * @param string $make 服务名称
      *
-     * @return IClient
+     * @return Container
      */
-    function client($make = null)
+    function container()
     {
-        if (is_null($make)) {
-            $make = 'client';
-        }
-
-        if ($logger = Di::get($make)) {
-            return $logger;
-        } else {
-            throw new \Symfony\Component\Console\Exception\LogicException('di not exist client');
-        }
+        return \Illuminate\Container\Container::getInstance();
     }
 }

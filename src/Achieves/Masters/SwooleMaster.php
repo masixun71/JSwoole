@@ -158,7 +158,7 @@ class SwooleMaster
         logger()->info('使用的listener', [
             'listener' => self::$listeners[$eventName]
         ]);
-        return app(self::$listeners[$eventName]);
+        return container()->make(self::$listeners[$eventName]);
     }
 
     /**

@@ -185,9 +185,9 @@ class SwooleCommand extends Command
             )
         );
         $io->listing(array(
-            '<fg=white>请将你的业务消息consumer程序注册到WokerMap中<info>Please register your business message consumer program into WokerMap</info></>',
-            '<fg=white>再创建一个worker与tasker沟通的event和处理listener<info>And then create a worker and tasker communication event and handle listener</info></>',
-            "<fg=white>完成<info>done></info></fg>"
+            '<fg=white>请将你的业务消息consumer程序注册到WokerMap中<info>[Please register your business message consumer program into WokerMap]</info></>',
+            '<fg=white>再创建一个worker与tasker沟通的event和处理listener<info>[And then create a worker and tasker communication event and handle listener]</info></>',
+            "<fg=white>完成<info>done></info></>"
         ));
         $io->success('🙏感谢收看[thank you]');
     }

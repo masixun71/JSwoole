@@ -426,7 +426,7 @@ class SwooleManager
             if (count($this->taskers) > 0)
             {
                 /** @var IClient $client */
-                $client = app(IClient::class);
+                $client = container()->make(IClient::class);
                 /** @var AbstractEvent $event */
                 $count = $params['channel']->stats()['queue_num'];
                 for ($i = 0; $i < $count; $i++) {
