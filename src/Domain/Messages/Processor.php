@@ -24,15 +24,8 @@ class Processor
      */
     public static function getMessage($data)
     {
-        if ($data[0] != '{')
-        {
-        }
-        else
-        {
-
             $eventData = json_decode($data, true);
 
             return new MessageDataVO($eventData);
-        }
     }
 }
