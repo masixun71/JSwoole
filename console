@@ -5,6 +5,7 @@ use Symfony\Component\Console\Application;
 use Jue\Swoole\Achieves\Commands\TestCommand;
 
 require __DIR__.'/vendor/autoload.php';
+require __DIR__.'/src/Helpers.php';
 
 $application = new Application();
 

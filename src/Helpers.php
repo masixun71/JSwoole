@@ -27,7 +27,7 @@ if (!function_exists('logger')) {
 if (!function_exists('container')) {
 
     /**
-     * 读取logger实例.
+     * 读取container实例.
      *
      * @param string $make 服务名称
      *

@@ -6,6 +6,7 @@ namespace Jue\Swoole\Achieves\Commands;
 use Jue\Swoole\Domain\Maps\WorkerMap;
 use Jue\Swoole\Achieves\Managers\SwooleManager;
 use Jue\Swoole\Achieves\Masters\SwooleMaster;
+use Jue\Swoole\SwooleServiceProvider;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Exception\LogicException;
 use Symfony\Component\Console\Input\InputArgument;
@@ -58,6 +59,9 @@ class SwooleCommand extends Command
         $taskerNum = $this->input->getArgument('tasker_num');
         $msgStart = $this->input->getArgument('msg_start');
         $msgEnd = $this->input->getArgument('msg_end');
+
+        (new SwooleServiceProvider())->register();
+
 
         switch ($do)
         {
