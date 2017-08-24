@@ -3,7 +3,7 @@
 namespace Jue\Swoole\Achieves\Commands;
 
 
-use Jue\Swoole\Domain\Maps\WorkerMap;
+use Jue\Swoole\Achieves\Masters\SwooleMaster;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -32,7 +32,7 @@ class TestCommand extends Command
         $io->section('使用例子<info>[example]</info>(php console swoole start class-course-schedule-for-order 2 1 3)');
 
         $map = [];
-        foreach (WorkerMap::MAP as $key => $item)
+        foreach (SwooleMaster::getConfig()->getWorkerMap() as $key => $item)
         {
             $map[] = [$key, $item['class'], $item['des']];
         }

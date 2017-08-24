@@ -32,7 +32,7 @@ class Logger
      */
     protected static function getFilename($dir)
     {
-        return rtrim($dir, '/').'/console/swoole.log';
+        return rtrim($dir, '/').'/swoole.log';
     }
 
     /**

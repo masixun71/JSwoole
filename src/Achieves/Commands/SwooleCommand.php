@@ -3,7 +3,6 @@
 namespace Jue\Swoole\Achieves\Commands;
 
 
-use Jue\Swoole\Domain\Maps\WorkerMap;
 use Jue\Swoole\Achieves\Managers\SwooleManager;
 use Jue\Swoole\Achieves\Masters\SwooleMaster;
 use Jue\Swoole\SwooleServiceProvider;
@@ -55,18 +54,16 @@ class SwooleCommand extends Command
         $this->output = $output;
 
         $do = $this->input->getArgument('do');
-        $consumer = $this->input->getArgument('consumer');
+        $consumerName = $this->input->getArgument('consumer');
         $taskerNum = $this->input->getArgument('tasker_num');
         $msgStart = $this->input->getArgument('msg_start');
         $msgEnd = $this->input->getArgument('msg_end');
 
-        (new SwooleServiceProvider())->register();
+        container()->make(SwooleServiceProvider::class)->register();
 
-
-        switch ($do)
-        {
+        switch ($do) {
             case 'start':
-                $this->start($consumer, $taskerNum, $msgStart, $msgEnd);
+                $this->start($consumerName, $taskerNum, $msgStart, $msgEnd);
                 break;
             case 'show':
                 $this->showTable();
@@ -79,55 +76,15 @@ class SwooleCommand extends Command
     }
 
 
-
-    private function start($consumer, $taskerNum, $msgStart, $msgEnd)
+    private function start($consumerName, $taskerNum, $msgStart, $msgEnd)
     {
-        if (empty($consumer) || empty($taskerNum) || empty($msgStart) || empty($msgEnd))
-        {
+        if (empty($consumerName) || empty($taskerNum) || empty($msgStart) || empty($msgEnd)) {
             throw new LogicException('缺少参数，请检查swoole，start参数[Missing parameters, please check swoole, start parameter]');
         }
 
-
-        if(!is_null(SwooleMaster::getWorkerMap()[$consumer]))
-        {
-            $this->checkMsg($taskerNum, $msgStart, $msgEnd);
-
-            $swooleManager = new SwooleManager(1, $taskerNum);
-            $swooleManager->start($consumer, $msgStart);
-        }
-        else
-        {
-            throw new LogicException('不存在该consumer[The consumer does not exist]');
-        }
+        $swooleManager = new SwooleManager(1, $taskerNum);
+        $swooleManager->start($consumerName, $taskerNum, $msgStart, $msgEnd);
     }
-
-
-    private function checkMsg($taskerNum, $msgStart, $msgEnd)
-    {
-        if ($msgStart <= 0)
-        {
-            throw new LogicException('msgStart 必须大于0[msgStart must more than 0]');
-        }
-
-        if (($msgEnd - $msgStart) != $taskerNum)
-        {
-            throw new LogicException('消息队列使用的是[start, end-1],务必范围总数和启动的tasker数量保持一致[msgKey in [start, end-1], you need set (taskerNum == msgEnd - msgStart)]');
-        }
-
-//        for ($i = $msgStart; $i < $msgEnd; $i++)
-//        {
-//            $str = sprintf("%08X", $i);
-//            $cmd = "ipcs -q | awk '{print $1}' | grep {$str}";
-//            $res = shell_exec($cmd);
-//            if (!empty($res))
-//            {
-//                throw new LogicException("有存在的消息队列key:{$i},请使用不存咋的key");
-//            }
-//        }
-
-    }
-
-
 
     private function showTable()
     {
@@ -136,8 +93,7 @@ class SwooleCommand extends Command
         $io->section('使用例子<info>[example]</info>(php console swoole start test 2 1 3)');
 
         $map = [];
-        foreach (WorkerMap::MAP as $key => $item)
-        {
+        foreach (SwooleMaster::getConfig()->getWorkerMap() as $key => $item) {
             $map[] = [$key, $item['class'], $item['des']];
         }
         $io->table(

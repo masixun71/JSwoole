@@ -4,10 +4,11 @@ namespace Jue\Swoole\Achieves\Masters;
 
 
 
+use Jue\Swoole\Achieves\Configs\Config;
+
 class SwooleMaster
 {
     private static $taskers;
-    private static $listeners;
     private static $table;
     private static $markTable;
     private static $memoryTable;
@@ -15,7 +16,8 @@ class SwooleMaster
     private static $taskerCount;
     private static $channel;
     private static $topic;
-    private static $workerMap;
+    /** @var Config $config */
+    private static $config;
 
     const SWOOLE_MANAGER_NAME = 'swoole-%s-manager';
     const SWOOLE_WORKER_NAME =  'swoole-%s-worker#%d';
@@ -137,28 +139,24 @@ class SwooleMaster
         return self::$channel;
     }
 
-    public static function listen(array $arr)
+
+    public static function getConfig()
     {
-        self::$listeners = $arr;
+        return self::$config;
     }
 
-    public static function registerWorkerMap($map)
+    public static function setConfig($config)
     {
-        self::$workerMap = $map;
-    }
-
-    public static function getWorkerMap()
-    {
-        return self::$workerMap;
+        self::$config = $config;
     }
 
 
     public static function getListener($eventName)
     {
         logger()->info('使用的listener', [
-            'listener' => self::$listeners[$eventName]
+            'listener' => self::getConfig()->getListeners()[$eventName],
         ]);
-        return container()->make(self::$listeners[$eventName]);
+        return container()->make(self::getConfig()->getListeners()[$eventName]);
     }
 
     /**

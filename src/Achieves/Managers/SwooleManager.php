@@ -11,8 +11,6 @@ use Jue\Swoole\Domain\Messages\Processor;
 use Jue\Swoole\Domain\Types\WorkerType;
 use Jue\Swoole\Achieves\Channels\Channel;
 use Jue\Swoole\Achieves\Masters\SwooleMaster;
-use Jue\Swoole\Achieves\Taskers\SwooleTasker;
-use Jue\Swoole\Achieves\Workers\SwooleWorker;
 
 class SwooleManager
 {
@@ -24,7 +22,6 @@ class SwooleManager
 
     private $redirect_stout = false;
     private $restart = false;
-    private $cleanMsgQueue = false;
 
     /**
      * @return int
@@ -67,9 +64,33 @@ class SwooleManager
     }
 
 
-    public function start($consumerName, $msgStart)
+    private function checkParams($consumerName, $taskerNum, $msgStart, $msgEnd)
+    {
+        if(!is_null(SwooleMaster::getConfig()->getWorkerMap()[$consumerName]))
+        {
+            if ($msgStart <= 0)
+            {
+                throw new \Exception('msgStart 必须大于0[msgStart must more than 0]');
+            }
+
+            if (($msgEnd - $msgStart) != $taskerNum)
+            {
+                throw new \Exception('消息队列使用的是[start, end-1],务必范围总数和启动的tasker数量保持一致[msgKey in [start, end-1], you need set (taskerNum == msgEnd - msgStart)]');
+            }
+        }
+        else
+        {
+            throw new \Exception('不存在该consumer[The consumer does not exist]');
+        }
+    }
+
+
+
+    public function start($consumerName, $taskerNum, $msgStart, $msgEnd)
     {
         gc_enable();
+
+        $this->checkParams($consumerName, $taskerNum, $msgStart, $msgEnd);
 
         $this->init($consumerName, $msgStart);
         $this->doWorker();
@@ -108,7 +129,7 @@ class SwooleManager
     private function initLog()
     {
         container()->forgetInstance(ILogger::class);
-        container()->instance(ILogger::class, container()->make(ILoggerManagerInterface::class)->newLogger('/tmp', SwooleMaster::getTopic()));
+        container()->instance(ILogger::class, container()->make(ILoggerManagerInterface::class)->newLogger(SwooleMaster::getConfig()->getLogDir(), SwooleMaster::getTopic()));
     }
 
 
@@ -118,7 +139,7 @@ class SwooleManager
             '数量' => $this->getTaskerNum()
         ]);
         for ($i = 0; $i < $this->getTaskerNum(); $i++) {
-            $tasker = new \swoole_process([SwooleTasker::class, 'init'], $this->isRedirectStout(), false);
+            $tasker = new \swoole_process([SwooleMaster::getConfig()->getTasker(), 'init'], $this->isRedirectStout(), false);
             $tasker->useQueue($i + $msgStart);
             $tasker->id = $i;
             $tasker->start();
@@ -137,7 +158,7 @@ class SwooleManager
             '数量' => $this->getWorkerNum()
         ]);
         for ($i = 0; $i < $this->getWorkerNum(); $i++) {
-            $worker = new \swoole_process([SwooleWorker::class, 'init'], $this->isRedirectStout(), false);
+            $worker = new \swoole_process([SwooleMaster::getConfig()->getWorker(), 'init'], $this->isRedirectStout(), false);
             $worker->id = $i;
             $worker->consumer = $consumer;
             $worker->start();
@@ -188,7 +209,7 @@ class SwooleManager
                     $msgQueueId = $processObj->msgQueueId;
                     \swoole_process::kill($processObj->pid, SIGKILL);
 
-                    if ($this->cleanMsgQueue)
+                    if (!SwooleMaster::getConfig()->isRestartByNotLoseMessage())
                     {
                         //清除对应的tasker消息队列，必须在杀死tasker后清除
                         shell_exec("ipcrm -q {$msgQueueId} | sh > /dev/null 2>&1;");
@@ -204,14 +225,17 @@ class SwooleManager
             }
 
             $endTime = time();
-            if ($endTime > ($startTime + 60)) {
+            if ($endTime > ($startTime + SwooleMaster::getConfig()->getTaskerWorkingForWaitSecondByStop())) {
                 //退出tasker进程
                 foreach ($this->taskers as $id => $processObj) {
                     \swoole_process::kill($processObj->pid, SIGKILL);
                     $allProcess[$processObj->pid] = $processObj;
-                    //清除对应的tasker消息队列，必须在杀死tasker后清除
-                    $msgQueueId = $processObj->msgQueueId;
-                    shell_exec("ipcrm -q {$msgQueueId} | sh > /dev/null 2>&1;");
+                    if (!SwooleMaster::getConfig()->isRestartByNotLoseMessage())
+                    {
+                        $msgQueueId = $processObj->msgQueueId;
+                        //清除对应的tasker消息队列，必须在杀死tasker后清除
+                        shell_exec("ipcrm -q {$msgQueueId} | sh > /dev/null 2>&1;");
+                    }
                 }
                 break;
             }
@@ -257,8 +281,8 @@ class SwooleManager
 
                     logger()->error('异常退出的进程是tasker进程', $ret);
 
-                    $newTasker = new \swoole_process([SwooleTasker::class, 'init'], $this->isRedirectStout(), false);
-                    $newTasker->useQueue($processObj->id + 1);
+                    $newTasker = new \swoole_process([SwooleMaster::getConfig()->getTasker(), 'init'], $this->isRedirectStout(), false);
+                    $newTasker->useQueue($processObj->msgQueueKey);
                     $newTasker->id = $processObj->id;
                     $isSuccess = $newTasker->start();
 
@@ -404,7 +428,7 @@ class SwooleManager
 
     private function initChannel()
     {
-        $channel = new \Swoole\Channel(1024 * 128);
+        $channel = new \Swoole\Channel(SwooleMaster::getConfig()->getChannelSize());
 
         SwooleMaster::setChannel($channel);
     }
@@ -417,7 +441,7 @@ class SwooleManager
         $table = SwooleMaster::getTable();
 
         //处理channel
-        swoole_timer_tick(500, function ($timeId, $params) {
+        swoole_timer_tick(SwooleMaster::getConfig()->getTimerTickForChannel(), function ($timeId, $params) {
 
             if (count($this->taskers) > 0)
             {
@@ -439,7 +463,7 @@ class SwooleManager
 
 
         //定点输出tasker处理状态
-        swoole_timer_tick(1000 * 9, function ($timeId, $params) {
+        swoole_timer_tick(SwooleMaster::getConfig()->getTimerTckForTaskerWorkStatus(), function ($timeId, $params) {
             foreach ($params['tasker'] as $tasker) {
                 $key = sprintf(SwooleMaster::TABLE_TASKER_COLLECT_COUNT, $tasker->id);
                 if ($params['table']->get($key)) {
@@ -451,8 +475,9 @@ class SwooleManager
             'tasker' => $this->taskers
         ]);
 
+
         //定点检查子进程内存状态
-        swoole_timer_tick(1000 * 60, function ($timeId, $params) {
+        swoole_timer_tick(SwooleMaster::getConfig()->getTimerTckForTaskerMemoryStatus(), function ($timeId, $params) {
             $table = SwooleMaster::getMemoryTable();
 
             $limit = 100;
@@ -478,7 +503,7 @@ class SwooleManager
 
 
         //定点输出内存使用情况
-        swoole_timer_tick(1000 * 70, function ($timeId, $params) {
+        swoole_timer_tick(SwooleMaster::getConfig()->getTimerTckForManagerMemoryStatus(), function ($timeId, $params) {
 
             if ($this->restart) {
                 logger()->info("重启当前manager进程", [
@@ -492,7 +517,7 @@ class SwooleManager
                 'memory' => $memory . "MB",
             ]);
 
-            $limit = 60;
+            $limit = SwooleMaster::getConfig()->getMaxManagerMemory();
             if ($memory >= $limit) {
                 logger()->info("当前manager进程内存已超过限制值{$limit}MB，需要进行重启");
                 $this->restart = true;

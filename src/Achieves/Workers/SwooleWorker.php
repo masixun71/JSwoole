@@ -32,7 +32,7 @@ class SwooleWorker
         {
             self::initialize();
 
-            container()->make(SwooleMaster::getWorkerMap()[$worker->consumer]['class'])->handle();
+            container()->make(SwooleMaster::getConfig()->getWorkerMap()[$worker->consumer]['class'])->handle();
 
         }catch (\Exception $e)
         {
@@ -47,7 +47,7 @@ class SwooleWorker
     public static function initialize()
     {
         container()->forgetInstance(ILogger::class);
-        container()->instance(ILogger::class, container()->make(ILoggerManagerInterface::class)->newLogger('/tmp', sprintf(SwooleMaster::getTopic()."-swoole-worker#%d", self::$id)));
+        container()->instance(ILogger::class, container()->make(ILoggerManagerInterface::class)->newLogger(SwooleMaster::getConfig()->getLogDir(), sprintf(SwooleMaster::getTopic()."-worker#%d", self::$id)));
     }
 
 }

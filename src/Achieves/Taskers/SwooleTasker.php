@@ -108,7 +108,7 @@ class SwooleTasker
     public static function initialize()
     {
         container()->forgetInstance(ILogger::class);
-        container()->instance(ILogger::class, container()->make(ILoggerManagerInterface::class)->newLogger('/tmp', sprintf(SwooleMaster::getTopic() . '-' . sprintf("swoole-tasker#%d", self::$id))));
+        container()->instance(ILogger::class, container()->make(ILoggerManagerInterface::class)->newLogger(SwooleMaster::getConfig()->getLogDir(), sprintf(SwooleMaster::getTopic() . sprintf("-tasker#%d", self::$id))));
     }
 
     private static function checkTaskDone($result, $worker, $message, $event)
