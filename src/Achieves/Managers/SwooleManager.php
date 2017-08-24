@@ -26,7 +26,6 @@ class SwooleManager
     private $restart = false;
     private $cleanMsgQueue = false;
 
-
     /**
      * @return int
      */
@@ -196,11 +195,6 @@ class SwooleManager
                     }
                     $allProcess[$processObj->pid] = $processObj;
                     unset($allTaskers[$id]);
-                } else {
-//                    logger()->info('swoole检测到有tasker进程正在处理消息，等待tasker进程处理完成', [
-//                        'pid' => $processObj->pid,
-//                        'id' => $id
-//                    ]);
                 }
             }
 
@@ -510,7 +504,6 @@ class SwooleManager
                 }
 
             }
-
 
         }, []);
 

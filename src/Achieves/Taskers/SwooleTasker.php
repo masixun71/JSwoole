@@ -29,6 +29,8 @@ class SwooleTasker
 
         try {
 
+            self::initialize();
+
             $taskerName = sprintf(SwooleMaster::SWOOLE_TASKER_NAME, SwooleMaster::getTopic(), $worker->id);
             @swoole_set_process_name($taskerName);
             logger()->info("当前启动了tasker进程", [
@@ -41,7 +43,6 @@ class SwooleTasker
             $msgType = 1;
             while (true) {
                 try {
-//                    $message = $worker->pop();
                     msg_receive($messageQueue, 0, $msgType, 1024, $event, true);
                     $message = Processor::toMessage($event);
 
@@ -104,7 +105,7 @@ class SwooleTasker
     /**
      * if you need change,please Overloaded this method and add parent::initialize()
      */
-    public function initialize()
+    public static function initialize()
     {
         container()->forgetInstance(ILogger::class);
         container()->instance(ILogger::class, container()->make(ILoggerManagerInterface::class)->newLogger('/tmp', sprintf(SwooleMaster::getTopic() . '-' . sprintf("swoole-tasker#%d", self::$id))));

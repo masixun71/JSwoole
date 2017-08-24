@@ -133,7 +133,7 @@ class SwooleCommand extends Command
     {
         $io = new SymfonyStyle($this->input, $this->output);
         $io->title('table展示可执行的consumer程序<info>[table display can consumer process]</info>');
-        $io->section('使用例子<info>[example]</info>(php console swoole start class-course-schedule-for-order 2 1 3)');
+        $io->section('使用例子<info>[example]</info>(php console swoole start test 2 1 3)');
 
         $map = [];
         foreach (WorkerMap::MAP as $key => $item)

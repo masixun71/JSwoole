@@ -30,7 +30,6 @@ class SwooleWorker
 
         try
         {
-            //重置子进程logger位置
             self::initialize();
 
             container()->make(SwooleMaster::getWorkerMap()[$worker->consumer]['class'])->handle();
@@ -45,7 +44,7 @@ class SwooleWorker
     /**
      * if you need change,please Overloaded this method and add parent::initialize()
      */
-    public function initialize()
+    public static function initialize()
     {
         container()->forgetInstance(ILogger::class);
         container()->instance(ILogger::class, container()->make(ILoggerManagerInterface::class)->newLogger('/tmp', sprintf(SwooleMaster::getTopic()."-swoole-worker#%d", self::$id)));

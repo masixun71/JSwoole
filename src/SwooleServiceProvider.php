@@ -31,8 +31,10 @@ class SwooleServiceProvider
 
     public function registerLogger()
     {
-        container()->instance(ILoggerManagerInterface::class, LoggerManager::class);
-        container()->instance(ILogger::class, container()->make(ILoggerManagerInterface::class)->newLogger('/tmp'));
+        container()->bind(ILoggerManagerInterface::class, LoggerManager::class);
+
+        $loggerManager = container()->make(ILoggerManagerInterface::class);
+        container()->instance(ILogger::class, $loggerManager->newLogger('/tmp'));
     }
 
     public function registerSwoole()
