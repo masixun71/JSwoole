@@ -5,10 +5,11 @@ namespace Jue\Swoole\Achieves\Managers;
 
 use Jue\Swoole\Domain\Clients\IClient;
 use Jue\Swoole\Domain\Events\AbstractEvent;
+use Jue\Swoole\Domain\Loggers\ILogger;
+use Jue\Swoole\Domain\Loggers\ILoggerManagerInterface;
 use Jue\Swoole\Domain\Messages\Processor;
 use Jue\Swoole\Domain\Types\WorkerType;
 use Jue\Swoole\Achieves\Channels\Channel;
-use Jue\Swoole\Achieves\Loggers\Logger;
 use Jue\Swoole\Achieves\Masters\SwooleMaster;
 use Jue\Swoole\Achieves\Taskers\SwooleTasker;
 use Jue\Swoole\Achieves\Workers\SwooleWorker;
@@ -79,7 +80,7 @@ class SwooleManager
     private function init($consumerName, $msgStart)
     {
         SwooleMaster::setTopic($consumerName);
-        $this->initLog($consumerName);
+        $this->initLog();
         $this->clear();
         $this->initCollectTable();
         $this->initMemoryTable();
@@ -105,9 +106,10 @@ class SwooleManager
     }
 
 
-    private function initLog($consumerName)
+    private function initLog()
     {
-        (new Logger())->set($consumerName);
+        container()->forgetInstance(ILogger::class);
+        container()->instance(ILogger::class, container()->make(ILoggerManagerInterface::class)->newLogger('/tmp', SwooleMaster::getTopic()));
     }
 
 

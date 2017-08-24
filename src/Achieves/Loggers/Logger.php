@@ -2,20 +2,21 @@
 
 namespace Jue\Swoole\Achieves\Loggers;
 
+use Jue\Swoole\Domain\Loggers\ILogger;
 use Monolog\Handler\HandlerInterface;
 use Monolog\Handler\RotatingFileHandler;
 
 class Logger
 {
     /**
-     * @return
+     * @return ILogger
      */
     public static function getInstance($dir, $extName = '')
     {
         $logger = new \Monolog\Logger('logger');
         $logger = self::configureHandlers($logger, $dir, $extName);
 
-        return $logger;
+        return new LoggerWriter($logger);
     }
 
 

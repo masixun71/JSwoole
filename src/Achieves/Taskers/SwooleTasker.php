@@ -4,10 +4,11 @@ namespace Jue\Swoole\Achieves\Taskers;
 
 
 use Jue\Swoole\Domain\Events\AbstractEvent;
+use Jue\Swoole\Domain\Loggers\ILogger;
+use Jue\Swoole\Domain\Loggers\ILoggerManagerInterface;
 use Jue\Swoole\Domain\Messages\Processor;
 use Jue\Swoole\Domain\Types\WorkerType;
 use Jue\Swoole\Achieves\Channels\Channel;
-use Jue\Swoole\Achieves\Loggers\Logger;
 use Jue\Swoole\Achieves\Masters\SwooleMaster;
 use Jue\Swoole\Achieves\Tables\CollectTable;
 use Jue\Swoole\Achieves\Tables\MarkTable;
@@ -16,9 +17,15 @@ use Jue\Swoole\Achieves\Tables\MemoryTable;
 class SwooleTasker
 {
 
+    public static $id;
+
+
     public static function init(\swoole_process $worker)
     {
         gc_enable();
+
+        $id = $worker->id;
+        self::$id = $id;
 
         try {
 
@@ -30,7 +37,6 @@ class SwooleTasker
                 'table' => SwooleMaster::getTable()
             ]);
 
-            self::reset(sprintf("swoole-tasker#%d", $worker->id));
             $messageQueue = msg_get_queue($worker->msgQueueKey, 0666);
             $msgType = 1;
             while (true) {
@@ -95,13 +101,14 @@ class SwooleTasker
         $worker->exit(0);
     }
 
-    private static function reset($taskerName)
+    /**
+     * if you need change,please Overloaded this method and add parent::initialize()
+     */
+    public function initialize()
     {
-        //重置子进程日志位置 todo
-        Di::set('logger', Logger::getInstance('/tmp', sprintf(SwooleMaster::getTopic() . '-' . $taskerName)));
-        //重置数据库链接 todo
+        container()->forgetInstance(ILogger::class);
+        container()->instance(ILogger::class, container()->make(ILoggerManagerInterface::class)->newLogger('/tmp', sprintf(SwooleMaster::getTopic() . '-' . sprintf("swoole-tasker#%d", self::$id))));
     }
-
 
     private static function checkTaskDone($result, $worker, $message, $event)
     {

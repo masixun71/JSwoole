@@ -2,9 +2,9 @@
 
 namespace Jue\Swoole\Achieves\Workers;
 
-
-use Jue\Swoole\Achieves\Loggers\Logger;
 use Jue\Swoole\Achieves\Masters\SwooleMaster;
+use Jue\Swoole\Domain\Loggers\ILogger;
+use Jue\Swoole\Domain\Loggers\ILoggerManagerInterface;
 
 class SwooleWorker
 {
@@ -30,8 +30,8 @@ class SwooleWorker
 
         try
         {
-            //重置子进程logger位置 todo
-            Di::set('logger', Logger::getInstance('/tmp', sprintf(SwooleMaster::getTopic()."-swoole-worker#%d", $id)));
+            //重置子进程logger位置
+            self::initialize();
 
             container()->make(SwooleMaster::getWorkerMap()[$worker->consumer]['class'])->handle();
 
@@ -40,6 +40,15 @@ class SwooleWorker
             logger()->error("worker进程出错",$e);
             throw $e;
         }
+    }
+
+    /**
+     * if you need change,please Overloaded this method and add parent::initialize()
+     */
+    public function initialize()
+    {
+        container()->forgetInstance(ILogger::class);
+        container()->instance(ILogger::class, container()->make(ILoggerManagerInterface::class)->newLogger('/tmp', sprintf(SwooleMaster::getTopic()."-swoole-worker#%d", self::$id)));
     }
 
 }

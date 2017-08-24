@@ -2,11 +2,12 @@
 
 namespace Jue\Swoole;
 
-use Jue\Swoole\Achieves\Loggers\Logger;
+use Jue\Swoole\Achieves\Loggers\LoggerManager;
 use Jue\Swoole\Domain\Clients\IClient;
 use Jue\Swoole\Domain\Events\TestEvent;
 use Jue\Swoole\Domain\Listeners\TestListener;
 use Jue\Swoole\Domain\Loggers\ILogger;
+use Jue\Swoole\Domain\Loggers\ILoggerManagerInterface;
 use Jue\Swoole\Domain\Maps\WorkerMap;
 use Jue\Swoole\Achieves\Clients\Client;
 use Jue\Swoole\Achieves\Masters\SwooleMaster;
@@ -30,7 +31,8 @@ class SwooleServiceProvider
 
     public function registerLogger()
     {
-        container()->instance(ILogger::class, Logger::getInstance('/tmp'));
+        container()->instance(ILoggerManagerInterface::class, LoggerManager::class);
+        container()->instance(ILogger::class, container()->make(ILoggerManagerInterface::class)->newLogger('/tmp'));
     }
 
     public function registerSwoole()
