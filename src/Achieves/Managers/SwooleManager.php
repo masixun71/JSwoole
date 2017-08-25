@@ -136,8 +136,8 @@ class SwooleManager
 
     private function initTaskerProcess($msgStart)
     {
-        logger()->info('初始化swoole-manager-taskers', [
-            '数量' => $this->getTaskerNum()
+        logger()->info(Language::getWord(Language::INIT_MANAGER_TASKER), [
+            'count' => $this->getTaskerNum()
         ]);
         for ($i = 0; $i < $this->getTaskerNum(); $i++) {
             $tasker = new \swoole_process([SwooleMaster::getConfig()->getTasker(), 'init'], $this->isRedirectStout(), false);
@@ -149,14 +149,14 @@ class SwooleManager
 
         SwooleMaster::setTaskers($this->taskers);
 
-        logger()->info('初始化swoole-manager-taskers完成', $this->taskers);
+        logger()->info(Language::getWord(Language::INIT_MANAGER_TASKER_OK), $this->taskers);
     }
 
 
     private function initWorkerProcess($consumer)
     {
-        logger()->info('初始化swoole-manager-worker', [
-            '数量' => $this->getWorkerNum()
+        logger()->info(Language::getWord(Language::INIT_MANAGER_WORKER), [
+            'count' => $this->getWorkerNum()
         ]);
         for ($i = 0; $i < $this->getWorkerNum(); $i++) {
             $worker = new \swoole_process([SwooleMaster::getConfig()->getWorker(), 'init'], $this->isRedirectStout(), false);
@@ -166,7 +166,7 @@ class SwooleManager
 
             $this->workers[] = $worker;
         }
-        logger()->info('初始化swoole-manager-worker完成', $this->workers);
+        logger()->info(Language::getWord(Language::INIT_MANAGER_WORKER_OK), $this->workers);
     }
 
 
@@ -179,28 +179,26 @@ class SwooleManager
 
     public function sigtermHandle()
     {
-        logger()->info('swoole总进程正在正常退出');
-
         $allProcess = [];
 
-        logger()->info('swoole开始退出worker进程');
-        //退出worker进程
+        logger()->info(Language::getWord(Language::EXIT_WORKER));
+        //退出worker进程 (worer exit)
         foreach ($this->workers as $id => $processObj) {
             \swoole_process::kill($processObj->pid, SIGKILL);
 
             $allProcess[$processObj->pid] = $processObj;
         }
-        logger()->info('swoole检测到所有worker进程退出完成');
+        logger()->info(Language::getWord(Language::EXIT_WORKER_DONE));
         $table = SwooleMaster::getTable();
 
-        logger()->info('swoole开始退出tasker进程');
+        logger()->info(Language::getWord(Language::EXIT_TASKER));
         $allTaskers = $this->taskers;
 
 
         $startTime = time();
 
         while (true) {
-            //检测系统中所有任务完成并退出tasker进程
+            //检测系统中所有任务完成并退出tasker进程 (check all tasker process is done and exit)
             foreach ($allTaskers as $id => $processObj) {
                 $taskerTableCollectStatus = $table->get(sprintf(SwooleMaster::TABLE_TASKER_COLLECT_COUNT, $id));
                 $receiveCount = $taskerTableCollectStatus[SwooleMaster::TABLE_RECIVE_KEY];
@@ -212,7 +210,7 @@ class SwooleManager
 
                     if (!SwooleMaster::getConfig()->isRestartByNotLoseMessage())
                     {
-                        //清除对应的tasker消息队列，必须在杀死tasker后清除
+                        //清除对应的tasker消息队列，必须在杀死tasker后清除 (clear linux Message)
                         shell_exec("ipcrm -q {$msgQueueId} | sh > /dev/null 2>&1;");
                     }
                     $allProcess[$processObj->pid] = $processObj;
@@ -221,20 +219,20 @@ class SwooleManager
             }
 
             if (empty($allTaskers)) {
-                logger()->info('swoole检测到所有tasker进程退出完成');
+                logger()->info(Language::getWord(Language::EXIT_TASKER_DONE));
                 break;
             }
 
             $endTime = time();
             if ($endTime > ($startTime + SwooleMaster::getConfig()->getTaskerWorkingForWaitSecondByStop())) {
-                //退出tasker进程
+                //退出tasker进程 (exit tasker)
                 foreach ($this->taskers as $id => $processObj) {
                     \swoole_process::kill($processObj->pid, SIGKILL);
                     $allProcess[$processObj->pid] = $processObj;
                     if (!SwooleMaster::getConfig()->isRestartByNotLoseMessage())
                     {
                         $msgQueueId = $processObj->msgQueueId;
-                        //清除对应的tasker消息队列，必须在杀死tasker后清除
+                        //清除对应的tasker消息队列，必须在杀死tasker后清除 (clear linux Message)
                         shell_exec("ipcrm -q {$msgQueueId} | sh > /dev/null 2>&1;");
                     }
                 }
@@ -242,21 +240,20 @@ class SwooleManager
             }
         }
 
-        //等待捕获所有子进程退出
+        //等待捕获所有子进程退出 (wait for all worker and tasker)
         while (!empty($allProcess)) {
             while ($result = \swoole_process::wait(false)) {
                 $pid = $result['pid'];
                 unset($allProcess[$pid]);
             }
         }
-        logger()->info('swoole检测到所有子进程退出完成');
+        logger()->info(Language::getWord(Language::CHILD_PROCESS_DONE));
 
-        //删除系统的msg_queue
+        //删除系统的msg_queue (kill msg_queue)
 //        shell_exec('ipcs -q | awk \'{ print "ipcrm -q "$2}\' | sh > /dev/null 2>&1;');
 
-        //主进程退出
         swoole_event_exit();
-        logger()->info('swoole所有进程退出完成');
+        logger()->info(Language::getWord(Language::ALL_EXIT));
     }
 
 
@@ -291,7 +288,7 @@ class SwooleManager
                     $this->checkProcessError($isSuccess, $ret, $id);
                     unset($this->taskers[$id]);
                     $this->taskers[$id] = $newTasker;
-                    //检查是否存在未处理完的消息
+                    //检查是否存在未处理完的消息 (Check if there is an unprocessed message)
                     $this->startMarkEvent($id);
 
                     break;
@@ -441,7 +438,7 @@ class SwooleManager
 
         $table = SwooleMaster::getTable();
 
-        //处理channel
+        //处理channel (process channel)
         swoole_timer_tick(SwooleMaster::getConfig()->getTimerTickForChannel(), function ($timeId, $params) {
 
             if (count($this->taskers) > 0)
@@ -463,7 +460,7 @@ class SwooleManager
         ]);
 
 
-        //定点输出tasker处理状态
+        //定点输出tasker处理状态 (print tasker working status)
         swoole_timer_tick(SwooleMaster::getConfig()->getTimerTckForTaskerWorkStatus(), function ($timeId, $params) {
             foreach ($params['tasker'] as $tasker) {
                 $key = sprintf(SwooleMaster::TABLE_TASKER_COLLECT_COUNT, $tasker->id);
@@ -477,7 +474,7 @@ class SwooleManager
         ]);
 
 
-        //定点检查子进程内存状态
+        //定点检查子进程内存状态 (print tasker memory status)
         swoole_timer_tick(SwooleMaster::getConfig()->getTimerTckForTaskerMemoryStatus(), function ($timeId, $params) {
             $table = SwooleMaster::getMemoryTable();
 
@@ -503,7 +500,7 @@ class SwooleManager
 
 
 
-        //定点输出内存使用情况
+        //定点输出内存使用情况 (print manager memory status)
         swoole_timer_tick(SwooleMaster::getConfig()->getTimerTckForManagerMemoryStatus(), function ($timeId, $params) {
 
             if ($this->restart) {
@@ -523,7 +520,7 @@ class SwooleManager
                 logger()->info("当前manager进程内存已超过限制值{$limit}MB，需要进行重启");
                 $this->restart = true;
 
-                //先杀worker进程，保持没有新任务进来
+                //先杀worker进程，保持没有新任务进来 (first kill worker)
                 foreach ($this->workers as $id => $processObj) {
                     \swoole_process::kill($processObj->pid, SIGKILL);
                     $allProcess[$processObj->pid] = $processObj;

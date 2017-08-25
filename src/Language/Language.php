@@ -30,6 +30,16 @@ class Language
     const SELECT_TASKER = 'select_tasker';
     const CLIENT_SEND_MSG_SUCCESS = 'client_send_msg_success';
     const CLIENT_SEND_MSG_FAIL = 'client_send_msg_fail';
+    const INIT_MANAGER_TASKER = 'init_manager_tasker';
+    const INIT_MANAGER_TASKER_OK = 'init_manager_tasker_ok';
+    const INIT_MANAGER_WORKER = 'init_manager_worker';
+    const INIT_MANAGER_WORKER_OK = 'init_manager_worker_ok';
+    const EXIT_WORKER = 'exit_worker';
+    const EXIT_WORKER_DONE = 'exit_worker_done';
+    const EXIT_TASKER = 'exit_tasker';
+    const EXIT_TASKER_DONE = 'exit_tasker_done';
+    const CHILD_PROCESS_DONE = 'child_process_done';
+    const ALL_EXIT = 'all_exit';
 
     const MAP = [
         self::WORKER_START => [
@@ -123,6 +133,46 @@ class Language
         self::CLIENT_SEND_MSG_SUCCESS => [
             'cn' => '发送消息成功',
             'en' => 'Send Msg Success'
+        ],
+        self::INIT_MANAGER_TASKER => [
+            'cn' => '初始化swoole-manager-taskers',
+            'en' => 'init swoole-manager-taskers'
+        ],
+        self::INIT_MANAGER_TASKER_OK => [
+            'cn' => '初始化swoole-manager-taskers完成',
+            'en' => 'init swoole-manager-taskers ok'
+        ],
+        self::INIT_MANAGER_WORKER => [
+            'cn' => '初始化swoole-manager-worker',
+            'en' => 'init swoole-manager-worker'
+        ],
+        self::INIT_MANAGER_WORKER_OK => [
+            'cn' => '初始化swoole-manager-worker完成',
+            'en' => 'init swoole-manager-worker ok'
+        ],
+        self::EXIT_WORKER => [
+            'cn' => 'swoole开始退出worker进程',
+            'en' => 'Start to exit the worker process'
+        ],
+        self::EXIT_WORKER_DONE => [
+            'cn' => 'swoole检测到所有worker进程退出完成',
+            'en' => 'All worker processes exit'
+        ],
+        self::EXIT_TASKER => [
+            'cn' => 'swoole开始退出tasker进程',
+            'en' => 'Start to exit the tasker process'
+        ],
+        self::EXIT_TASKER_DONE => [
+            'cn' => 'swoole检测到所有tasker进程退出完成',
+            'en' => 'All tasker processes exit'
+        ],
+        self::CHILD_PROCESS_DONE => [
+            'cn' => 'swoole检测到所有子进程退出完成',
+            'en' => 'All child processes are finished'
+        ],
+        self::ALL_EXIT => [
+            'cn' => 'swoole所有进程退出完成',
+            'en' => 'all exit'
         ]
     ];
 
