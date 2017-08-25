@@ -15,16 +15,6 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 class SwooleCommand extends Command
 {
-    /**
-     * @var string
-     */
-    protected $value = 'swoole 
-                            { do? : 执行命令 [command]}
-                            { consumer? : 启动的consumer [start consumer name]}
-                            { tasker_num? : 启动的tasker数量 [start tasker amount]}
-                            { msg_start? : 启用消息队列key的起始值 [linux msgKey start]}
-                            { msg_end? : 启用消息队列key的结束值 [linux msgKey end] }
-                            ';
     //消息队列使用的是[start, end-1],务必范围总数和启动的tasker数量保持一致,
     //若系统中消息队列已经存在，会报错，请使用还未创建的消息队列的key
 
@@ -59,7 +49,7 @@ class SwooleCommand extends Command
         $msgStart = $this->input->getArgument('msg_start');
         $msgEnd = $this->input->getArgument('msg_end');
 
-        container()->make(SwooleServiceProvider::class)->register();
+        (new SwooleServiceProvider())->register();
 
         switch ($do) {
             case 'start':

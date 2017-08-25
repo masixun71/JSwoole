@@ -11,6 +11,7 @@ use Jue\Swoole\Domain\Messages\Processor;
 use Jue\Swoole\Domain\Types\WorkerType;
 use Jue\Swoole\Achieves\Channels\Channel;
 use Jue\Swoole\Achieves\Masters\SwooleMaster;
+use Jue\Swoole\Language\Language;
 
 class SwooleManager
 {
@@ -119,7 +120,7 @@ class SwooleManager
     private function clear()
     {
         $cmd = "ps -ef | grep swoole-" . SwooleMaster::getTopic() . " | awk '{print $2}' | xargs kill -9";
-        logger()->info("清洗可能之前存在的僵死进程", [
+        logger()->info(Language::getWord(Language::CLEAN_MANAGER), [
             'cmd' => $cmd
         ]);
         shell_exec($cmd);

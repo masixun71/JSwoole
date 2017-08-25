@@ -5,6 +5,7 @@ namespace Jue\Swoole\Achieves\Masters;
 
 
 use Jue\Swoole\Achieves\Configs\Config;
+use Jue\Swoole\Language\Language;
 
 class SwooleMaster
 {
@@ -153,7 +154,7 @@ class SwooleMaster
 
     public static function getListener($eventName)
     {
-        logger()->info('使用的listener', [
+        logger()->info(Language::getWord(Language::USED_LISTENER), [
             'listener' => self::getConfig()->getListeners()[$eventName],
         ]);
         return container()->make(self::getConfig()->getListeners()[$eventName]);

@@ -118,6 +118,32 @@ class Config
      */
     private $loggerManager = LoggerManager::class;
 
+
+    /**
+     * 支持中英(cn,en)
+     * language (cn,en)
+     * @var string
+     */
+    private $language = 'cn';
+
+    /**
+     * @return string
+     */
+    public function getLanguage()
+    {
+        return $this->language;
+    }
+
+    /**
+     * @param string $language
+     * @return $this
+     */
+    public function setLanguage($language)
+    {
+        $this->language = $language;
+        return $this;
+    }
+
     /**
      * @return string
      */

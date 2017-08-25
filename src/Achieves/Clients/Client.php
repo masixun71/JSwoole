@@ -7,6 +7,7 @@ use Jue\Swoole\Domain\Clients\IClient;
 use Jue\Swoole\Domain\Events\AbstractEvent;
 use Jue\Swoole\Domain\Messages\Processor;
 use Jue\Swoole\Achieves\Masters\SwooleMaster;
+use Jue\Swoole\Language\Language;
 
 class Client implements IClient
 {
@@ -17,7 +18,7 @@ class Client implements IClient
 
         $index = $event->getIndex() % SwooleMaster::getTaskerCount()->get();
 
-        logger()->info('选择给对应的tasker发送消息', [
+        logger()->info(Language::getWord(Language::SELECT_TASKER), [
             'index' => $event->getIndex(),
             'message' => Processor::toMessage($event)
         ]);
@@ -29,14 +30,14 @@ class Client implements IClient
 
         if($res)
         {
-            logger()->info('发送消息成功', [
+            logger()->info(Language::getWord(Language::CLIENT_SEND_MSG_SUCCESS), [
                 'index' => $event->getIndex(),
                 'message' => Processor::toMessage($event),
             ]);
         }
         else
         {
-            logger()->info('发送消息失败', [
+            logger()->info(Language::getWord(Language::CLIENT_SEND_MSG_FAIL), [
                 'index' => $event->getIndex(),
                 'message' => Processor::toMessage($event),
             ]);

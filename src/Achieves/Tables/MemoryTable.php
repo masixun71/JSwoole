@@ -4,6 +4,7 @@ namespace Jue\Swoole\Achieves\Tables;
 
 
 use Jue\Swoole\Achieves\Masters\SwooleMaster;
+use Jue\Swoole\Language\Language;
 
 class MemoryTable
 {
@@ -22,7 +23,7 @@ class MemoryTable
         $table->set($key, [
             SwooleMaster::TABLE_MEMORY_KEY => 0
         ]);
-        logger()->info("当前在内存table中clear", [
+        logger()->info(Language::getWord(Language::MEMORY_TABLE_CLEAR), [
             'key' => $key,
             'value' => $table->get($key)
         ]);

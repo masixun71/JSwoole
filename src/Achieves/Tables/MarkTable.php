@@ -4,6 +4,7 @@ namespace Jue\Swoole\Achieves\Tables;
 
 
 use Jue\Swoole\Achieves\Masters\SwooleMaster;
+use Jue\Swoole\Language\Language;
 
 class MarkTable
 {
@@ -14,7 +15,7 @@ class MarkTable
             SwooleMaster::TABLE_MARK_KEY => $message
         ]);
 
-        logger()->info("当前在标记table中种下了标记", [
+        logger()->info(Language::getWord(Language::MARK_TABLE_SET), [
             'message' => $message,
             'key' => $key,
             'value' => $table->get($key)
@@ -28,7 +29,7 @@ class MarkTable
         $table->set($key, [
             SwooleMaster::TABLE_MARK_KEY => null
         ]);
-        logger()->info("当前在标记table中清除了标记", [
+        logger()->info(Language::getWord(Language::MARK_TABLE_CLEAR), [
             'key' => $key,
             'value' => $table->get($key)
         ]);

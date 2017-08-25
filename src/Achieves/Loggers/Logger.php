@@ -21,10 +21,8 @@ class Logger
 
 
     /**
-     * 获取日志文件名称.
-     *
-     * /path/to/log/http.log
-     * /path/to/log/console/command.log
+     * 获取日志文件名称
+     * Get log name
      *
      * @param string $dir
      *
@@ -38,6 +36,7 @@ class Logger
     /**
      * 配置处理器.
      *
+     * Set Monolog Config
      * @param \Monolog\Logger $logger
      * @param array  $config
      *
@@ -57,6 +56,7 @@ class Logger
 
     /**
      * 配置格式.
+     *  Formatter
      *
      * @param HandlerInterface $handler
      *

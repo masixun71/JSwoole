@@ -16,7 +16,6 @@ class LoggerWriter implements ILogger
     }
 
     /**
-     * 运行时出现的错误，例如程序组件不可用或者出现非预期的异常、数据库不可用了或者其他的情况下.
      *
      * @param string $message
      * @param array|object $context
@@ -29,7 +28,6 @@ class LoggerWriter implements ILogger
     }
 
     /**
-     * 出现非错误性的异常，例如使用了被弃用的API、错误地使用了API或者非预想的不必要错误。.
      *
      * @param string $message
      * @param array|object $context
@@ -42,7 +40,6 @@ class LoggerWriter implements ILogger
     }
 
     /**
-     * 正常但是重要需要标记的事件.
      *
      * @param string $message
      * @param array|object $context
@@ -55,7 +52,6 @@ class LoggerWriter implements ILogger
     }
 
     /**
-     * 正常事件，例如用户登录和SQL记录.
      *
      * @param string $message
      * @param array|object $context
@@ -68,7 +64,6 @@ class LoggerWriter implements ILogger
     }
 
     /**
-     * 打印调试信息.
      *
      * @param string $message
      * @param array|object $context
@@ -81,7 +76,6 @@ class LoggerWriter implements ILogger
     }
 
     /**
-     * 最终写日志的方法.
      *
      * @param string $level
      * @param string $message

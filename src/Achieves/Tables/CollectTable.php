@@ -4,6 +4,7 @@ namespace Jue\Swoole\Achieves\Tables;
 
 
 use Jue\Swoole\Achieves\Masters\SwooleMaster;
+use Jue\Swoole\Language\Language;
 
 class CollectTable
 {
@@ -14,7 +15,7 @@ class CollectTable
         $table->incr($key, $column);
         $data = $table->get($key);
 
-        logger()->info("统计table——incr操作记录", [
+        logger()->info(Language::getWord(Language::COLLECT_TABLE_INCR), [
             'message' => $message,
             'column' => $column,
             'times' => $data[$column]
@@ -27,7 +28,7 @@ class CollectTable
         $table->decr($key, $column);
         $data = $table->get($key);
 
-        logger()->info("统计table——decr操作记录", [
+        logger()->info(Language::getWord(Language::COLLECT_TABLE_DECR), [
             'message' => $message,
             'column' => $column,
             'times' => $data[$column]
