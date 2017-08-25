@@ -260,12 +260,12 @@ class SwooleManager
     public function sigchldHandle()
     {
         while ($ret = \swoole_process::wait(false)) {
-            logger()->error('有子进程异常退出', $ret);
+            logger()->error(Language::getWord(Language::CHILD_PROCESS_EXIT_ABNORMALLY), $ret);
 
             foreach ($this->workers as $id => $processObj) {
                 /** @var \swoole_process $processObj */
                 if ($processObj->pid == $ret['pid']) {
-                    logger()->error('异常退出的进程是worker进程', $ret);
+                    logger()->error(Language::getWord(Language::WORKER_EXIT_ABNORMALLY), $ret);
                     $isSuccess = $processObj->start();
                     $this->checkProcessError($isSuccess, $ret, $id);
 
@@ -277,14 +277,14 @@ class SwooleManager
             foreach ($this->taskers as $id => $processObj) {
                 if ($processObj->pid == $ret['pid']) {
 
-                    logger()->error('异常退出的进程是tasker进程', $ret);
+                    logger()->error(Language::getWord(Language::TASKER_EXIT_ABNORMALLY), $ret);
 
                     $newTasker = new \swoole_process([SwooleMaster::getConfig()->getTasker(), 'init'], $this->isRedirectStout(), false);
                     $newTasker->useQueue($processObj->msgQueueKey);
                     $newTasker->id = $processObj->id;
                     $isSuccess = $newTasker->start();
 
-                    logger()->info('新重启的进程信息', $newTasker);
+                    logger()->info(Language::getWord(Language::NEW_PROCESS_INFO), $newTasker);
                     $this->checkProcessError($isSuccess, $ret, $id);
                     unset($this->taskers[$id]);
                     $this->taskers[$id] = $newTasker;
@@ -310,7 +310,7 @@ class SwooleManager
                 if ($event = $messageVO->buildEvent())
                 {
                     Channel::push($messageVO->buildEvent(), $id, WorkerType::MANAGER);
-                    logger()->info('发现tasker进程异常退出时存在未完成的event,放入重试队列', [
+                    logger()->info(Language::getWord(Language::TASKER_NOT_DONE_MSG_TO_CHANNEL), [
                         'message' => $message,
                         'worker_id' => $id
                     ]);
@@ -323,13 +323,13 @@ class SwooleManager
     public function checkProcessError($isSuccess, $process, $id)
     {
         if ($isSuccess) {
-            logger()->info('异常退出的进程重启成功', [
-                '进程' => $process,
+            logger()->info(Language::getWord(Language::RESTART_SUCCESS_WITH_PROCESS_ABNORMALLY), [
+                'process' => $process,
                 'id' => $id
             ]);
         } else {
-            logger()->info('异常退出的进程重启失败', [
-                '进程' => $process,
+            logger()->info(Language::getWord(Language::RESTART_FAIL_WITH_PROCESS_ABNORMALLY), [
+                'process' => $process,
                 'id' => $id
             ]);
         }
@@ -344,9 +344,9 @@ class SwooleManager
         $table->column(SwooleMaster::TABLE_ID_KEY, \swoole_table::TYPE_INT);
         $res = $table->create();
         if ($res) {
-            logger()->info("创建内存统计表成功");
+            logger()->info(Language::getWord(Language::CREATE_MEMORY_TABLE_SUCCESS));
         } else {
-            throw new \Exception("创建内存统计表失败");
+            throw new \Exception(Language::getWord(Language::CREATE_MEMORY_TABLE_FAIL));
         }
 
         SwooleMaster::setMemoryTable($table);
@@ -359,9 +359,9 @@ class SwooleManager
         $table->column(SwooleMaster::TABLE_MSG_KEY, \swoole_table::TYPE_INT);
         $res = $table->create();
         if ($res) {
-            logger()->info("创建tasker进程表成功");
+            logger()->info(Language::getWord(Language::CREATE_TASKER_TABLE_SUCCESS));
         } else {
-            throw new \Exception("创建tasker进程表失败");
+            throw new \Exception(Language::getWord(Language::CREATE_TASKER_TABLE_FAIL));
         }
 
         SwooleMaster::setTaskerTable($table);
@@ -399,9 +399,9 @@ class SwooleManager
         $table->column(SwooleMaster::TABLE_FAIL_KEY, \swoole_table::TYPE_INT);
         $res = $table->create();
         if ($res) {
-            logger()->info("创建通信统计表成功");
+            logger()->info(Language::getWord(Language::CREATE_COLLECT_TABLE_SUCCESS));
         } else {
-            throw new \Exception("创建通信统计表失败");
+            throw new \Exception(Language::getWord(Language::CREATE_COLLECT_TABLE_FAIL));
         }
 
         SwooleMaster::setTable($table);
@@ -415,9 +415,9 @@ class SwooleManager
         $res = $table->create();
 
         if ($res) {
-            logger()->info("创建标记内存表成功");
+            logger()->info(Language::getWord(Language::CREATE_MARK_TABLE_SUCCESS));
         } else {
-            logger()->info("创建标记内存表失败");
+            logger()->info(Language::getWord(Language::CREATE_MARK_TABLE_FAIL));
         }
 
         SwooleMaster::setMarkTable($table);
@@ -450,7 +450,7 @@ class SwooleManager
                 for ($i = 0; $i < $count; $i++) {
                     $event = $params['channel']->pop();
                     if ($event) {
-                        logger()->info("获取到event,发送给tasker", ['message' => Processor::toMessage($event)]);
+                        logger()->info(Language::getWord(Language::GET_MSG_TO_TASKER), ['message' => Processor::toMessage($event)]);
                         $client->fire($event);
                     }
                 }
@@ -465,7 +465,7 @@ class SwooleManager
             foreach ($params['tasker'] as $tasker) {
                 $key = sprintf(SwooleMaster::TABLE_TASKER_COLLECT_COUNT, $tasker->id);
                 if ($params['table']->get($key)) {
-                    logger()->info("当前进程运行状态:{$key}", $params['table']->get($key));
+                    logger()->info(sprintf(Language::getWord(Language::TASKER_RUNNING_STATUS), $key), $params['table']->get($key));
                 }
             }
         }, [
@@ -482,10 +482,10 @@ class SwooleManager
             foreach ($this->taskers as $tasker) {
                 $key = sprintf(SwooleMaster::TABLE_TASKER_MEMORY_SET, $tasker->id);
                 if ($data = $table->get($key)) {
-                    logger()->info("当前tasker进程内存状态", $data);
+                    logger()->info(Language::getWord(Language::SINGLE_TASKER_MEMORY_STATUS), $data);
 
                     if ($data[SwooleMaster::TABLE_MEMORY_KEY] >= $limit) {
-                        logger()->info("当前tasker进程内存已超过限制值{$limit}MB，自杀重启", $data);
+                        logger()->info(sprintf(Language::getWord(Language::SINGLE_TASKER_MOMERY_LIMIT), $limit), $data);
                         \swoole_process::kill($tasker->pid, SIGKILL);
                         $table->set($key, [
                             SwooleMaster::TABLE_MEMORY_KEY => 0,
@@ -504,20 +504,20 @@ class SwooleManager
         swoole_timer_tick(SwooleMaster::getConfig()->getTimerTckForManagerMemoryStatus(), function ($timeId, $params) {
 
             if ($this->restart) {
-                logger()->info("重启当前manager进程", [
+                logger()->info(Language::getWord(Language::RESTART_MANAGER), [
                     'pid' => posix_getpid()
                 ]);
                 \swoole_process::kill(posix_getpid(), SIGTERM);
             }
 
             $memory = (int)(memory_get_usage(true) / (1024 * 1024));
-            logger()->info('当前manager进程内存使用情况', [
+            logger()->info(Language::getWord(Language::SINGLE_MANAGER_MEMORY_STATUS), [
                 'memory' => $memory . "MB",
             ]);
 
             $limit = SwooleMaster::getConfig()->getMaxManagerMemory();
             if ($memory >= $limit) {
-                logger()->info("当前manager进程内存已超过限制值{$limit}MB，需要进行重启");
+                logger()->info(sprintf(Language::getWord(Language::SINGLE_MANAGER_MEMORY_LIMIT), $limit));
                 $this->restart = true;
 
                 //先杀worker进程，保持没有新任务进来 (first kill worker)
