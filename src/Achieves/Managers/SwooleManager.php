@@ -229,7 +229,11 @@ class SwooleManager
                 foreach ($this->taskers as $id => $processObj) {
                     \swoole_process::kill($processObj->pid, SIGKILL);
                     $allProcess[$processObj->pid] = $processObj;
-                    if (!SwooleMaster::getConfig()->isRestartByNotLoseMessage())
+                    if (SwooleMaster::getConfig()->isRestartByNotLoseMessage())
+                    {
+                        $this->startMarkEventByTasker($id);
+                    }
+                    else
                     {
                         $msgQueueId = $processObj->msgQueueId;
                         //清除对应的tasker消息队列，必须在杀死tasker后清除 (clear linux Message)
@@ -289,7 +293,7 @@ class SwooleManager
                     unset($this->taskers[$id]);
                     $this->taskers[$id] = $newTasker;
                     //检查是否存在未处理完的消息 (Check if there is an unprocessed message)
-                    $this->startMarkEvent($id);
+                    $this->startMarkEventByChannel($id);
 
                     break;
                 }
@@ -298,24 +302,50 @@ class SwooleManager
     }
 
 
-    private function startMarkEvent($id)
+    private function getMarkEvent($id)
     {
         $table = SwooleMaster::getMarkTable();
         $arr = $table->get(sprintf(SwooleMaster::TABLE_TASKER_MARK_SET, $id));
-
         if ($arr) {
             $message = $arr[SwooleMaster::TABLE_MARK_KEY];
             if (!empty($message)) {
                 $messageVO = Processor::getMessage($message);
                 if ($event = $messageVO->buildEvent())
                 {
-                    Channel::push($messageVO->buildEvent(), $id, WorkerType::MANAGER);
-                    logger()->info(Language::getWord(Language::TASKER_NOT_DONE_MSG_TO_CHANNEL), [
-                        'message' => $message,
-                        'worker_id' => $id
-                    ]);
+                    return $event;
                 }
             }
+        }
+
+        return false;
+    }
+
+    private function startMarkEventByTasker($id)
+    {
+        $event = $this->getMarkEvent($id);
+        if ($event)
+        {
+            /** @var IClient $client */
+            $client = container()->make(IClient::class);
+            logger()->info(Language::getWord(Language::MANAGER_RESTART_MARK_EVENT), [
+                'message' => Processor::toMessage($event),
+                'tasker_id' => $id
+                ]);
+            $client->fire($event);
+        }
+    }
+
+
+    private function startMarkEventByChannel($id)
+    {
+        $event = $this->getMarkEvent($id);
+        if ($event)
+        {
+            Channel::push($event, $id, WorkerType::MANAGER);
+            logger()->info(Language::getWord(Language::TASKER_NOT_DONE_MSG_TO_CHANNEL), [
+                'message' => Processor::toMessage($event),
+                'worker_id' => $id
+            ]);
         }
     }
 

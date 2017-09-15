@@ -62,6 +62,7 @@ class Language
     const RESTART_MANAGER = 'restart_manager';
     const SINGLE_MANAGER_MEMORY_STATUS = 'single_manager_memory_status';
     const SINGLE_MANAGER_MEMORY_LIMIT = 'single_manager_memory_limit';
+    const MANAGER_RESTART_MARK_EVENT = 'manager_restart_mark_event';
 
     const MAP = [
         self::WORKER_START => [
@@ -283,6 +284,10 @@ class Language
         self::SINGLE_MANAGER_MEMORY_LIMIT => [
             'cn' => '当前manager进程内存已超过限制值:%sMB，需要进行重启',
             'en' => 'The current manager process memory has exceeded the limit value :%s MB and needs to be restarted'
+        ],
+        self::MANAGER_RESTART_MARK_EVENT => [
+            'cn' => 'manager重启，将未处理完的进程放入消息队列',
+            'en' => 'manager to restart the unprocessed process into the message queue'
         ]
     ];
 
